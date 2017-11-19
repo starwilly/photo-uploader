@@ -72,6 +72,8 @@ coverage.xml
 .static_storage/
 .media/
 local_settings.py
+photo_uploader/media/
+
 
 # Flask stuff:
 instance/
