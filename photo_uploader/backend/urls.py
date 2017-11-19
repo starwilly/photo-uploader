@@ -4,5 +4,5 @@ from .views import PhotoUpload
 
 
 urlpatterns = [
-    url(r'upload/', PhotoUpload.as_view()),
+    url(r'upload', PhotoUpload.as_view()),
 ]
