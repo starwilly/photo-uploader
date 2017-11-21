@@ -23,6 +23,7 @@
   <br>
   <button @click="startCrop">Select</button>
   <button @click="cropImage">Crop</button>
+  <button @click="pixelate">Pixelate</button>
   <button @click="upload">Upload</button>
 
 </div>
@@ -31,6 +32,24 @@
 <script>
 import VueCropper from 'vue-cropperjs'
 import * as axios from 'axios'
+
+function startPixelate (img, canvas, cropData) {
+  const ctx = canvas.getContext('2d')
+  ctx.mozImageSmoothingEnabled = false
+  ctx.webkitImageSmoothingEnabled = false
+  ctx.imageSmoothingEnabled = false
+  // // cache scaled width and height
+  const w = cropData.width * 0.1
+  const h = cropData.height * 0.1
+
+  // // draw original image to the scaled size
+  ctx.drawImage(img, 0, 0, w, h)
+
+  // // then draw that scaled image thumb back to fill canvas
+  // // As smoothing is off the result will be pixelated
+  ctx.drawImage(canvas, 0, 0, w, h, cropData.x, cropData.y, cropData.width, cropData.height)
+  return canvas
+}
 
 export default {
   name: 'PhotoUploader',
@@ -85,6 +104,45 @@ export default {
     cropImage () {
       const newImgSrc = this.$refs.cropper.getCroppedCanvas().toDataURL(this.imgType)
       this.$refs.cropper.replace(newImgSrc)
+    },
+    pixelate () {
+      // const size = 25 * 0.01
+      const cropper = this.$refs.cropper
+      const croppedCanvas = cropper.getCroppedCanvas()
+      const cropData = cropper.getData()
+
+      // console.log(croppedCanvas)
+      // console.log('cropBoxData', cropBoxData)
+
+      cropper.clear()
+      const canvas = cropper.getCroppedCanvas()
+
+      const img = new Image()
+
+      img.onload = function () {
+        const pixelatedCanvas = startPixelate(this, canvas, cropData)
+        cropper.replace(pixelatedCanvas.toDataURL(this.imgType))
+      }
+      img.src = croppedCanvas.toDataURL(this.imgType)
+
+      // function test () {
+      //   const ctx = canvas.getContext('2d')
+      //   ctx.mozImageSmoothingEnabled = false
+      //   ctx.webkitImageSmoothingEnabled = false
+      //   ctx.imageSmoothingEnabled = false
+      //   // // cache scaled width and height
+      //   const w = canvas.width * 0.05
+      //   const h = canvas.height * 0.05
+
+      //   // // draw original image to the scaled size
+      //   ctx.drawImage(img, 0, 0, w, h)
+
+      //   // // then draw that scaled image thumb back to fill canvas
+      //   // // As smoothing is off the result will be pixelated
+      //   ctx.drawImage(canvas, 0, 0, w, h, 0, 0, canvas.width, canvas.height)
+
+      //   cropper.replace(canvas.toDataURL(this.imgType))
+      // }
     },
     upload () {
       this.$refs.cropper.getCroppedCanvas().toBlob((blob) => {
