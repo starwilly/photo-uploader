@@ -24,8 +24,9 @@ class PhotoUpload(View):
     def post(self, request, *args, **kwargs):
         form = PhotoUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return JsonResponse(data={'success': 'Photo Uploaded'})
+            photo = form.save()
+            return JsonResponse(data={'success':'Photo Uploaded',
+                                      'downloadLink': photo.download_link})
         else:
             return JsonResponse(status=400, data={'error': form.errors})
 

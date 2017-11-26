@@ -7,6 +7,7 @@ from .utils import photo_upload_to
 
 from django.db import models
 from django.utils.functional import cached_property
+from django.urls import reverse_lazy
 
 
 class Photo(models.Model):
@@ -21,3 +22,7 @@ class Photo(models.Model):
     def extension(self):
         _, ext = os.path.splitext(self.file.name)
         return ext[1:]
+
+    @property
+    def download_link(self):
+        return reverse_lazy('download', kwargs={'pk':self.pk})
