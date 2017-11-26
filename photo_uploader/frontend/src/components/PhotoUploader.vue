@@ -40,7 +40,6 @@
 
 <script>
 import VueCropper from 'vue-cropperjs'
-// import axios from 'axios'
 import Darkroom from '@/utils/image/darkroom'
 import {
   uploadPhoto,
@@ -62,12 +61,6 @@ export default {
     }
   },
   computed: {
-    imgExtension () {
-      if (this.imgType.indexOf('/') > 0) {
-        return this.imgType.split('/')[1]
-      }
-      return ''
-    },
     cropper () {
       return this.$refs.cropper
     }

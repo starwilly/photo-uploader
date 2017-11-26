@@ -51,8 +51,13 @@ function requestBlob (method, url, data) {
 
 export function uploadPhoto (blob) {
   const formData = new FormData()
-  const fileName = 'photo.png'
-  formData.append('file', blob, fileName)
+  let fileNameAry = blob.type.split('/')
+  if (fileNameAry.length !== 2) {
+    throw Error('Invalid file type')
+  }
+
+  const filename = `photo.${fileNameAry[1]}`
+  formData.append('file', blob, filename)
   return axios.post('/api/upload', formData)
 }
 
