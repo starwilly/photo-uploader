@@ -50,7 +50,7 @@ export default {
   },
   data () {
     return {
-      uploadUrl: 'http://localhost:8000/api/upload',
+      uploadUrl: '/api/upload',
       imgSrc: '',
       imgType: '',
       urlToLoad: 'https://www.google.com.tw/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
@@ -114,7 +114,7 @@ export default {
       reader.readAsDataURL(file)
     },
     loadImageFromURL () {
-      const url = 'http://localhost:8000/api/load-url'
+      const url = '/api/load-url'
 
       const handleSuccess = function (blob, request) {
         this.imgType = request.getResponseHeader('Content-Type')
@@ -154,7 +154,7 @@ export default {
         formData.append('file', blob, fileName)
         axios.post(this.uploadUrl, formData)
           .then(resp => {
-            alert('Upload image successfully')
+            alert(resp.data.downloadLink)
           })
       }, this.imgType)
     }

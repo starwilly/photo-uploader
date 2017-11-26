@@ -126,8 +126,8 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CORS_ORIGIN_WHITELIST = ('localhost:8080',)
-CSRF_TRUSTED_ORIGINS = ('localhost:8080',)
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ORIGIN_WHITELIST = ('localhost:8080',)
+# CSRF_TRUSTED_ORIGINS = ('localhost:8080',)
+# CORS_ALLOW_CREDENTIALS = True
 
 USER_UPLOAD_TO = 'uploads/'
