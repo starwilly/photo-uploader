@@ -40,7 +40,7 @@
 
 <script>
 import VueCropper from 'vue-cropperjs'
-import * as axios from 'axios'
+import axios from 'axios'
 import Darkroom from '@/utils/image/darkroom'
 
 export default {
@@ -115,8 +115,31 @@ export default {
     },
     loadImageFromURL () {
       const url = 'http://localhost:8000/api/load-url'
-      axios.post(url, {url: this.urlToLoad}, {responseType: 'blob'})
-        .then(res => this.readImageFile(res.data))
+      const handleSuccess = this.readImageFile
+      function handleError (errResp) {
+        console.log(errResp)
+      }
+      // Use XMLHttpRequest since axios cannot handle json response
+      // when we set responseType = `blob`
+      const request = new XMLHttpRequest()
+      request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+          if (request.status >= 200 && request.status < 300) {
+            handleSuccess(request.response)
+          } else {
+            handleError(request.response)
+          }
+        } else if (request.readyState === 2) {
+          if (request.status === 200) {
+            request.responseType = 'blob'
+          } else {
+            request.responseType = 'json'
+          }
+        }
+      }
+      request.open('POST', url, true)
+      request.setRequestHeader('Content-Type', 'application/json;charset=utf-8')
+      request.send(JSON.stringify({url: this.urlToLoad}))
     },
     upload () {
       this.cropper.getCroppedCanvas().toBlob((blob) => {
