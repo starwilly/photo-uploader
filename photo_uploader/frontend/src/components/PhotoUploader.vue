@@ -115,8 +115,13 @@ export default {
     },
     loadImageFromURL () {
       const url = 'http://localhost:8000/api/load-url'
-      const handleSuccess = this.readImageFile
-      function handleError (errResp) {
+
+      const handleSuccess = function (blob, request) {
+        this.imgType = request.getResponseHeader('Content-Type')
+        this.readImageFile(blob)
+      }.bind(this)
+
+      const handleError = function (errResp) {
         console.log(errResp)
       }
       // Use XMLHttpRequest since axios cannot handle json response
@@ -125,7 +130,7 @@ export default {
       request.onreadystatechange = function () {
         if (request.readyState === 4) {
           if (request.status >= 200 && request.status < 300) {
-            handleSuccess(request.response)
+            handleSuccess(request.response, request)
           } else {
             handleError(request.response)
           }
