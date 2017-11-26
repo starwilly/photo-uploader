@@ -7,7 +7,7 @@
          placeholder="http://wwww.example.com/test.png"
          v-model="urlToLoad"
          />
-  <button @click="loadImageFromURL">Load</button>
+  <button @click="loadURL">Load</button>
 
   <br />
   <div style="max-width: 900px; display: inline-block;">
@@ -40,8 +40,12 @@
 
 <script>
 import VueCropper from 'vue-cropperjs'
-import axios from 'axios'
+// import axios from 'axios'
 import Darkroom from '@/utils/image/darkroom'
+import {
+  uploadPhoto,
+  loadImageFromURL
+} from '@/api'
 
 export default {
   name: 'PhotoUploader',
@@ -72,11 +76,6 @@ export default {
     onCropperReady () {
       this.darkroom = new Darkroom(this.cropper.getCroppedCanvas())
     },
-    imageuploaded (res) {
-      if (res.success) {
-        alert(res.success)
-      }
-    },
     setImage (e) {
       const file = e.target.files[0]
 
@@ -85,7 +84,7 @@ export default {
         return
       }
 
-      this.imgType = file.type
+      // this.imgType = file.type
       this.readImageFile(file)
     },
     darkroomToCropper () {
@@ -109,50 +108,21 @@ export default {
     readImageFile (file) {
       const reader = new FileReader()
       reader.onload = event => {
+        this.imgType = file.type
         this.cropper.replace(event.target.result)
       }
       reader.readAsDataURL(file)
     },
-    loadImageFromURL () {
-      const url = '/api/load-url'
-
-      const handleSuccess = function (blob, request) {
-        this.imgType = request.getResponseHeader('Content-Type')
-        this.readImageFile(blob)
-      }.bind(this)
-
-      const handleError = function (errResp) {
-        console.log(errResp)
-      }
-      // Use XMLHttpRequest since axios cannot handle json response
-      // when we set responseType = `blob`
-      const request = new XMLHttpRequest()
-      request.onreadystatechange = function () {
-        if (request.readyState === 4) {
-          if (request.status >= 200 && request.status < 300) {
-            handleSuccess(request.response, request)
-          } else {
-            handleError(request.response)
-          }
-        } else if (request.readyState === 2) {
-          if (request.status === 200) {
-            request.responseType = 'blob'
-          } else {
-            request.responseType = 'json'
-          }
-        }
-      }
-      request.open('POST', url, true)
-      request.setRequestHeader('Content-Type', 'application/json;charset=utf-8')
-      request.send(JSON.stringify({url: this.urlToLoad}))
+    loadURL () {
+      loadImageFromURL(this.urlToLoad)
+        .then(resp => this.readImageFile(resp.data))
+        .catch(err => {
+          console.log(err.response)
+        })
     },
     upload () {
       this.cropper.getCroppedCanvas().toBlob((blob) => {
-        const formData = new FormData()
-        const fileName = 'image.' + this.imgExtension
-
-        formData.append('file', blob, fileName)
-        axios.post(this.uploadUrl, formData)
+        uploadPhoto(blob)
           .then(resp => {
             alert(resp.data.downloadLink)
           })
