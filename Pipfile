@@ -15,3 +15,7 @@ django = "*"
 pillow = "*"
 django-cors-headers = "*"
 requests = "*"
+easy-thumbnails = "*"
+
+[requires]
+python_version = "3.6"
