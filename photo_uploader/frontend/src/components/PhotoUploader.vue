@@ -1,6 +1,14 @@
 <template>
 <div class="center">
+
   <input type="file" name="image" accept="image/*" @change="setImage"/>
+  <br>
+  <input type="url"
+         placeholder="http://wwww.example.com/test.png"
+         v-model="urlToLoad"
+         />
+  <button @click="loadImageFromURL">Load</button>
+
   <br />
   <div style="max-width: 900px; display: inline-block;">
       <vue-cropper
@@ -32,7 +40,7 @@
 
 <script>
 import VueCropper from 'vue-cropperjs'
-import * as axios from 'axios'
+import axios from 'axios'
 import Darkroom from '@/utils/image/darkroom'
 
 export default {
@@ -45,6 +53,7 @@ export default {
       uploadUrl: 'http://localhost:8000/api/upload',
       imgSrc: '',
       imgType: '',
+      urlToLoad: 'https://www.google.com.tw/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
       darkroom: null
     }
   },
@@ -70,7 +79,6 @@ export default {
     },
     setImage (e) {
       const file = e.target.files[0]
-      const reader = new FileReader()
 
       if (!file.type.includes('image/')) {
         alert('Please select an image file')
@@ -78,14 +86,7 @@ export default {
       }
 
       this.imgType = file.type
-
-      reader.onload = (event) => {
-        this.imgSrc = event.target.result
-        // replace src and rebuild the cropper
-        this.cropper.replace(event.target.result)
-      }
-
-      reader.readAsDataURL(file)
+      this.readImageFile(file)
     },
     darkroomToCropper () {
       const url = this.darkroom.canvas.toDataURL(this.imgType)
@@ -104,6 +105,41 @@ export default {
       this.cropper.clear()
       this.darkroom.pixelate(cropData)
       this.darkroomToCropper()
+    },
+    readImageFile (file) {
+      const reader = new FileReader()
+      reader.onload = event => {
+        this.cropper.replace(event.target.result)
+      }
+      reader.readAsDataURL(file)
+    },
+    loadImageFromURL () {
+      const url = 'http://localhost:8000/api/load-url'
+      const handleSuccess = this.readImageFile
+      function handleError (errResp) {
+        console.log(errResp)
+      }
+      // Use XMLHttpRequest since axios cannot handle json response
+      // when we set responseType = `blob`
+      const request = new XMLHttpRequest()
+      request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+          if (request.status >= 200 && request.status < 300) {
+            handleSuccess(request.response)
+          } else {
+            handleError(request.response)
+          }
+        } else if (request.readyState === 2) {
+          if (request.status === 200) {
+            request.responseType = 'blob'
+          } else {
+            request.responseType = 'json'
+          }
+        }
+      }
+      request.open('POST', url, true)
+      request.setRequestHeader('Content-Type', 'application/json;charset=utf-8')
+      request.send(JSON.stringify({url: this.urlToLoad}))
     },
     upload () {
       this.cropper.getCroppedCanvas().toBlob((blob) => {

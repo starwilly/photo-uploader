@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.http import JsonResponse
+import requests
+import json
+
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from .forms import PhotoUploadForm
+from .forms import PhotoUploadForm, ImageURLLoadForm
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -20,3 +23,17 @@ class PhotoUpload(View):
             return JsonResponse(data={'success': 'Photo Uploaded'})
         else:
             return JsonResponse(status=400, data={'error': form.errors})
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LoadURLView(View):
+    def post(self, request, *args, **kwargs):
+        form = ImageURLLoadForm(json.loads(request.body))
+        if not form.is_valid():
+            return JsonResponse(status=400, data={'error': form.errors})
+        url = form.cleaned_data['url']
+        res = requests.get(url, stream=True)
+        return StreamingHttpResponse(
+            (chunk for chunk in res.iter_content(512 * 1024)),
+            content_type=res.headers['Content-Type']
+        )
