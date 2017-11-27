@@ -45,13 +45,9 @@ class LoadURLView(View):
         )
 
 
-def download_photo(request, pk):
+def download_photo(request, uuid):
     """ generate thumbnail """
-    try:
-        photo = get_object_or_404(Photo, pk=pk)
-    except ValidationError:
-        raise Http404
-
+    photo = get_object_or_404(Photo, uuid=uuid)
     form = PhotoDownLoadForm(request.GET)
     resize_bound = form.get_resize_bound()
     if resize_bound:
