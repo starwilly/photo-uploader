@@ -64,7 +64,9 @@ export default {
     height: {
       type: Number,
       default: '400'
-    }
+    },
+    onUploadSuccess: Function,
+    onUploadError: Function
   },
   data () {
     return {
@@ -85,8 +87,14 @@ export default {
   },
   methods: {
     onCropperReady () {
-      console.log('ready')
+      const canvasData = this.cropper.getCanvasData()
+      const containerData = this.cropper.getContainerData()
       this.darkroom = new Darkroom(this.cropper.getCroppedCanvas())
+      // if image is smaller than container, zoom to 1
+      if (canvasData.naturalWidth < containerData.width &&
+          canvasData.naturalHeight < containerData.height) {
+        this.cropper.zoomTo(1)
+      }
     },
     setImage (file) {
       this.readImageFile(file.raw)
@@ -126,7 +134,14 @@ export default {
       this.cropper.getCroppedCanvas().toBlob((blob) => {
         uploadPhoto(blob)
           .then(resp => {
-            alert(resp.data.downloadLink)
+            if (this.onUploadSuccess) {
+              this.onUploadSuccess(resp.data)
+            }
+          })
+          .catch(err => {
+            if (this.onUploadError) {
+              this.onUploadError(err)
+            }
           })
       }, this.imgType)
     }
