@@ -1,63 +1,81 @@
 <template>
-<div class="center">
-
-  <input type="file" name="image" accept="image/*" @change="setImage"/>
-  <br>
-  <input type="url"
-         placeholder="http://wwww.example.com/test.png"
-         v-model="urlToLoad"
-         />
-  <button @click="loadURL">Load</button>
-
-  <br />
-  <div style="max-width: 900px; display: inline-block;">
-      <vue-cropper
-          ref="cropper"
-          :guides="true"
-          :view-mode="2"
-          drag-mode="crop"
-          :auto-crop="false"
-          :auto-crop-area="0.5"
-          :min-container-width="250"
-          :min-container-height="180"
-          :background="true"
-          :rotatable="true"
-          :src="imgSrc"
-          :ready="onCropperReady"
-          alt="Source Image"
-          :img-style="{ width: '400px', height: '300px' }"
-          >
-      </vue-cropper>
+<div class="center"  >
+  <div v-if="mode==='WAIT_FILE'" class="step">
+    <div class="toolbox">
+      <el-input type="url" v-model="urlToLoad" size="mini"
+                placeholder="http://wwww.example.com/test.png">
+        <el-button slot="append" icon="el-icon-search" @click="loadURL"></el-button>
+      </el-input>
+    </div>
+    <el-upload action=""
+              class="dropzone canvas-container"
+              :style="{height: height}"
+              accept="image/*"
+              drag
+              :on-change="setImage"
+              :auto-upload="false"
+              :limit="1">
+      <div class="dropzone__content" :style="{height: height + 'px'}">
+        <i class="el-icon-picture dropzone__icon"></i>
+        <div class="el-upload__text">Drop image here or <em>click to choose file</em></div>
+      </div>
+    </el-upload>
   </div>
-  <br>
-  <button @click="startCrop">Select</button>
-  <button @click="cropImage">Crop</button>
-  <button @click="pixelate">Pixelate</button>
-  <button @click="upload">Upload</button>
 
+  <div v-if="mode==='EDIT'" class="step">
+    <div class="toolbox">
+      <el-button type="primary" size="mini" @click="cropImage">Crop</el-button>
+      <el-button type="primary" size="mini" @click="pixelate">Pixelate</el-button>
+      <el-button type="primary" size="mini" @click="upload"> Upload</el-button>
+    </div>
+    <div class="canvas-container">
+      <vue-cropper
+        :container-style="{ height: height + 'px' }"
+        ref="cropper"
+        :guides="false"
+        :view-mode="0"
+        drag-mode="crop"
+        :auto-crop="false"
+        :auto-crop-area="0.5"
+        :background="true"
+        :restore="false"
+        :rotatable="false"
+        :zoomable="true"
+        src="imgSrc"
+        :ready="onCropperReady"
+        alt="Source Image" />
+      </vue-cropper>
+    </div>
+  </div>
 </div>
 </template>
 
 <script>
 import VueCropper from 'vue-cropperjs'
 import Darkroom from '@/utils/image/darkroom'
-import {
-  uploadPhoto,
-  loadImageFromURL
-} from '@/api'
+import { uploadPhoto, loadImageFromURL } from '@/api'
 
 export default {
   name: 'PhotoUploader',
   components: {
     'vue-cropper': VueCropper
   },
+  props: {
+    height: {
+      type: Number,
+      default: '400'
+    }
+  },
   data () {
     return {
       uploadUrl: '/api/upload',
       imgSrc: '',
       imgType: '',
-      urlToLoad: 'https://www.google.com.tw/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
-      darkroom: null
+      // urlToLoad: 'https://www.google.com.tw/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+      urlToLoad: '',
+      darkroom: null,
+      fileList: [],
+      mode: 'WAIT_FILE'
     }
   },
   computed: {
@@ -67,29 +85,19 @@ export default {
   },
   methods: {
     onCropperReady () {
+      console.log('ready')
       this.darkroom = new Darkroom(this.cropper.getCroppedCanvas())
     },
-    setImage (e) {
-      const file = e.target.files[0]
-
-      if (!file.type.includes('image/')) {
-        alert('Please select an image file')
-        return
-      }
-
-      // this.imgType = file.type
-      this.readImageFile(file)
+    setImage (file) {
+      this.readImageFile(file.raw)
     },
     darkroomToCropper () {
       const url = this.darkroom.canvas.toDataURL(this.imgType)
       this.cropper.replace(url)
     },
-    startCrop () {
-      // console.log(this.$refs.cropper.cropper.crop())
-      // this.$refs.cropper.crop()
-    },
     cropImage () {
       const newImgSrc = this.cropper.getCroppedCanvas().toDataURL(this.imgType)
+      this.imgSrc = newImgSrc
       this.cropper.replace(newImgSrc)
     },
     pixelate () {
@@ -105,6 +113,7 @@ export default {
         this.cropper.replace(event.target.result)
       }
       reader.readAsDataURL(file)
+      this.mode = 'EDIT'
     },
     loadURL () {
       loadImageFromURL(this.urlToLoad)
@@ -124,3 +133,40 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+  .step {
+    max-width: 100%;
+    height: 100%;
+  }
+
+  .canvas-container {
+    max-width: 100%;
+  }
+
+  .toolbox {
+    margin-bottom: 10px
+  }
+
+  .dropzone__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .dropzone >>> .el-upload {
+    width: 100%;
+    height: 100%;
+  }
+
+  .dropzone >>> .el-upload-dragger  {
+    width: 100%;
+    height: 100%;
+  }
+
+  .dropzone__icon {
+    font-size: 67px;
+    color: #b4bccc;
+  }
+
+</style>
