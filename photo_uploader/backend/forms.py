@@ -18,8 +18,8 @@ class ImageURLLoadForm(forms.Form):
 
 
 class PhotoDownLoadForm(forms.Form):
-    w = forms.IntegerField(required=False)
-    h = forms.IntegerField(required=False)
+    w = forms.IntegerField(required=False, min_value=0)
+    h = forms.IntegerField(required=False, min_value=0)
 
     def get_resize_bound(self):
         if not self.is_valid():
